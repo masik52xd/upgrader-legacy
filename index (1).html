@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPGRADER PRO - Реалістичний Симулятор</title>
+    <style>
+        :root {
+            --bg-dark: #101115;
+            --panel-bg: #16171f;
+            --panel-sub: #12131a;
+            --accent: #ffd200;
+            --text-main: #ffffff;
+            --text-gray: #828594;
+            --border: #20222f;
+            --steam-green: #5c7e10;
+            --steam-blue: #1b2838;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 8px 8px 8px 0;
+            box-sizing: border-box;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        .app-layout {
+            display: grid;
+            grid-template-columns: 215px 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+        .live-drops-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 0 10px 10px 0;
+            padding: 10px;
+            box-sizing: border-box;
+            height: 770px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .live-drops-panel h4 {
+            margin: 0 0 8px 0;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            text-align: center;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+        .drops-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .drop-card {
+            background-color: var(--panel-sub);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 5px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            position: relative;
+            animation: slideDown 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .drop-rarity { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 5px 0 0 5px; }
+        .drop-img { width: 32px; height: 32px; object-fit: contain; }
+        .drop-info { display: flex; flex-direction: column; width: calc(100% - 40px); }
+        .drop-user { font-size: 9px; font-weight: bold; color: var(--accent); }
+        .drop-name { font-size: 8px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .drop-chance { font-size: 8px; color: var(--text-gray); margin-top: 1px; }
+        .drop-status { position: absolute; right: 5px; top: 5px; width: 6px; height: 6px; border-radius: 50%; }
+        .main-app { display: flex; flex-direction: column; gap: 12px; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .logo { font-weight: 800; font-size: 20px; }
+        .logo span { color: var(--accent); }
+        .header-controls { display: flex; align-items: center; gap: 15px; }
+        .btn-deposit {
+            background-color: var(--accent); color: #000; border: none;
+            padding: 8px 16px; font-weight: 800; border-radius: 6px;
+            cursor: pointer; text-transform: uppercase; font-size: 11px;
+        }
+        .btn-steam-login {
+            background-color: #101822;
+            color: #66c0f4;
+            border: 1px solid #101822;
+            padding: 6px 12px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-steam-login:hover { border-color: #66c0f4; }
+        .user-avatar { width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--accent); }
+        .workspace { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 12px; }
+        .workspace-card {
+            background-color: var(--panel-bg); border: 1px solid var(--border);
+            border-radius: 10px; padding: 15px; display: flex; flex-direction: column;
+            align-items: center; box-sizing: border-box; min-height: 350px;
+        }
+        .workspace-card h3 { margin: 0 0 10px 0; font-size: 12px; color: var(--text-gray); text-transform: uppercase; }
+        .selected-list {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            width: 100%; flex-grow: 1; align-content: flex-start; overflow-y: auto; max-height: 200px;
+        }
+        .empty-placeholder {
+            display: flex; align-items: center; justify-content: center; color: var(--text-gray);
+            font-size: 12px; text-align: center; flex-grow: 1; border: 1px dashed var(--border);
+            border-radius: 8px; width: 100%; box-sizing: border-box; padding: 10px;
+        }
+        .total-value { font-size: 16px; font-weight: 700; margin-top: 10px; color: var(--accent); }
+        .wheel-container {
+            position: relative; width: 170px; height: 170px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 8px 0;
+            background: conic-gradient(var(--border) 0deg, var(--border) 360deg);
+        }
+        .wheel-inner {
+            width: 138px; height: 138px; background-color: var(--panel-bg);
+            border-radius: 50%; z-index: 2; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .wheel-inner .percent { font-size: 24px; font-weight: 800; color: var(--accent); }
+        .wheel-inner .label { font-size: 9px; color: var(--text-gray); text-transform: uppercase; }
+        .needle {
+            position: absolute; width: 4px; height: 72px; background-color: #ffffff;
+            bottom: 50%; left: calc(50% - 2px); transform-origin: bottom center;
+            z-index: 3; border-radius: 2px; box-shadow: 0 0 8px #ffffff;
+            transform: rotate(0deg);
+        }
+        .preset-categories-panel {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin: 8px 0;
+        }
+        .btn-preset {
+            background-color: var(--panel-sub);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-preset:hover { border-color: var(--accent); color: var(--accent); }
+        .upgrade-controls { display: flex; flex-direction: column; width: 100%; gap: 8px; margin-top: auto; }
+        .btn-upgrade {
+            width: 100%; background-color: var(--accent); color: #000; border: none;
+            padding: 12px; font-size: 14px; font-weight: 800; border-radius: 8px;
+            cursor: pointer; text-transform: uppercase;
+        }
+        .btn-upgrade:disabled { background-color: var(--border); color: var(--text-gray); cursor: not-allowed; }
+        .fast-roll-option {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; font-size: 11px; color: var(--text-gray); cursor: pointer;
+        }
+        .target-premium-card {
+            background: radial-gradient(circle, #202231 0%, #121319 100%);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+        .target-premium-card .skin-img-large {
+            width: 140px; height: 140px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 15px;
+            animation: floatLarge 4s ease-in-out infinite;
+        }
+        .target-premium-card .skin-img-large img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        @keyframes floatLarge {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        .target-premium-card .skin-title-large { font-size: 12px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 8px; word-break: break-word; }
+        .target-premium-card .skin-price-large { font-size: 15px; font-weight: 900; color: var(--accent); text-shadow: 0 0 10px rgba(255, 210, 0, 0.4); }
+        .inventory-section { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .inventory-card {
+            background-color: var(--panel-bg); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; position: relative;
+        }
+        .inventory-card h3 { margin: 0 0 10px 0; font-size: 12px; color: var(--text-gray); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .auth-lock-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(22,23,31,0.96); z-index: 10; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; text-align: center; color: var(--text-gray); font-size: 13px;
+        }
+        .market-search-box {
+            background-color: var(--panel-sub); border: 1px solid var(--border);
+            border-radius: 6px; padding: 5px 8px; color: #fff; outline: none;
+            font-size: 11px; width: 140px;
+        }
+        .skins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; height: 280px; overflow-y: auto; }
+        .skin-item {
+            background-color: var(--panel-sub); border: 1px solid var(--border); border-radius: 5px;
+            padding: 6px; display: flex; flex-direction: column; align-items: center;
+            justify-content: space-between; cursor: pointer; height: 114px; box-sizing: border-box;
+            position: relative; text-align: center;
+        }
+        .skin-item.selected { border-color: var(--accent); background-color: rgba(255, 210, 0, 0.03); }
+        .skin-rarity { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 5px 5px 0 0; }
+        .skin-img { width: 100%; height: 50px; display: flex; align-items: center; justify-content: center; margin: 4px 0; }
+        .skin-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .skin-name { font-size: 9px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+        .skin-price { font-size: 10px; font-weight: 700; color: var(--accent); margin-top: 2px; }
+        .btn-skin-withdraw {
+            background-color: #2ebd59; color: #fff; border: none; border-radius: 4px;
+            font-size: 9px; font-weight: bold; padding: 2px 6px; cursor: pointer; margin-top: 4px; width: 100%;
+        }
+        .btn-skin-withdraw:hover { background-color: #249e49; }
+        #status-banner { margin-top: 8px; font-size: 13px; font-weight: 700; min-height: 18px; text-align: center; }
+        .text-win { color: #2ebd59; }
+        .text-lose { color: #ff4b4b; }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: var(--panel-bg); border: 1px solid var(--border); padding: 25px;
+            border-radius: 12px; width: 340px; position: relative;
+        }
+        .modal-close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; color: var(--text-gray); }
+        .modal h2 { margin: 0 0 15px 0; font-size: 18px; text-align: center; }
+        .modal label { font-size: 12px; color: var(--text-gray); margin-bottom: 5px; display: block; }
+        .modal input {
+            width: 100%; background-color: var(--panel-sub); border: 1px solid var(--border);
+            color: #fff; padding: 10px; border-radius: 6px; font-size: 16px; margin-bottom: 15px;
+            outline: none; box-sizing: border-box;
+        }
+        .btn-submit-deposit {
+            width: 100%; background-color: var(--accent); color: #000; border: none;
+            padding: 12px; font-weight: 800; border-radius: 6px; cursor: pointer; text-transform: uppercase;
+        }
+        .compensation-modal-content {
+            background: radial-gradient(circle, #242633 0%, #16171f 100%);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 25px rgba(255, 210, 0, 0.4);
+            text-align: center; padding: 30px; border-radius: 12px; width: 320px;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .steam-modal-content {
+            background-color: var(--steam-blue);
+            color: #c7d5e0;
+            width: 380px;
+            padding: 30px;
+            border-radius: 4px;
+            border: 1px solid #101822;
+        }
+        .steam-logo {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-size: 20px; font-weight: bold; color: #fff; margin-bottom: 25px;
+        }
+        .steam-btn {
+            background: linear-gradient(to right, #47b28f, #2e8b57);
+            color: #fff; border: none; padding: 12px; width: 100%;
+            font-weight: bold; border-radius: 3px; cursor: pointer; margin-top: 15px;
+        }
+        .steam-notification {
+            position: fixed;
+            bottom: -100px; left: 20px;
+            width: 320px;
+            background-color: #213c54;
+            border: 1px solid #2a475e;
+            border-left: 4px solid #66c0f4;
+            color: #c7d5e0;
+            padding: 14px 18px;
+            border-radius: 4px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+            cursor: pointer;
+            z-index: 1000;
+            transition: bottom 0.4s cubic-bezier(0.1, 0.8, 0.2, 1);
+            display: flex; gap: 12px; align-items: center;
+        }
+        .steam-notification.show { bottom: 20px; }
+        .steam-notif-bell { font-size: 28px; color: #66c0f4; }
+        .steam-notif-title { font-weight: bold; color: #fff; font-size: 13px; }
+        .steam-notif-desc { font-size: 11px; margin-top: 2px; color: #a3b2c1; }
+        .steam-trade-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.92); z-index: 1100; justify-content: center; align-items: center;
+        }
+        .steam-trade-box {
+            background-color: #1b2838;
+            border: 2px solid #2a475e;
+            width: 580px;
+            border-radius: 4px;
+            color: #c7d5e0;
+            padding: 25px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        .steam-trade-header {
+            font-size: 16px; color: #dae5f0; margin-bottom: 15px; border-bottom: 1px solid #2a475e;
+            padding-bottom: 10px; display: flex; justify-content: space-between; font-weight: bold;
+        }
+        .steam-warning-box {
+            background-color: rgba(235, 75, 75, 0.08);
+            border: 1px solid #eb4b4b;
+            color: #ff8585;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        .steam-trade-grids { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .steam-trade-grid-card {
+            background-color: #101822; border: 1px solid #233c51;
+            border-radius: 4px; padding: 15px; height: 170px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; position: relative;
+        }
+        .steam-partner-avatar {
+            position: absolute; top: 12px; left: 12px;
+            width: 28px; height: 28px; border-radius: 4px;
+            border: 2px solid #5c7e10;
+        }
+        .steam-checkbox-label {
+            display: flex; align-items: center; gap: 8px; font-size: 11px;
+            margin-top: 15px; cursor: pointer; color: #8f9da6;
+        }
+        .btn-steam-accept {
+            background-color: var(--steam-green); color: #fff; border: none;
+            padding: 12px; font-weight: bold; border-radius: 3px; cursor: pointer;
+            width: 100%; margin-top: 20px; font-size: 13px; text-transform: uppercase;
+        }
+        .btn-steam-accept:disabled { background-color: #313d4a; color: #627282; cursor: not-allowed; }
+        .gpay-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85); z-index: 1200; justify-content: center; align-items: center;
+        }
+        .gpay-box {
+            background-color: #ffffff; color: #202124; width: 360px;
+            border-radius: 8px; padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-family: 'Google Sans', Roboto, sans-serif;
+            position: relative;
+        }
+        .gpay-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #dadce0;
+            padding-bottom: 10px;
+        }
+        .gpay-logo { height: 20px; }
+        .gpay-close { cursor: pointer; font-size: 20px; color: #5f6368; }
+        .gpay-field { margin-bottom: 15px; }
+        .gpay-field label { font-size: 12px; color: #5f6368; display: block; margin-bottom: 4px; }
+        .gpay-field input {
+            width: 100%; border: 1px solid #dadce0; padding: 10px; border-radius: 4px;
+            font-size: 14px; outline: none; box-sizing: border-box;
+        }
+        .gpay-card-select {
+            background-color: #f8f9fa; border: 1px solid #dadce0; padding: 12px;
+            border-radius: 4px; display: flex; justify-content: space-between;
+            align-items: center; font-size: 14px; font-weight: bold; cursor: pointer;
+        }
+        .gpay-btn {
+            background-color: #000000; color: #ffffff; width: 100%; border: none;
+            padding: 12px; font-weight: bold; border-radius: 4px; cursor: pointer;
+            font-size: 14px; text-align: center; margin-top: 15px;
+        }
+        .gpay-btn:hover { background-color: #202124; }
+        .btn-buy {
+            background-color: var(--panel-sub); color: var(--accent); border: 1px solid var(--accent);
+            padding: 8px 16px; font-weight: 700; border-radius: 6px; cursor: pointer;
+            font-size: 11px; margin-top: 8px; display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <div class="live-drops-panel">
+        <h4>Живий Дроп</h4>
+        <div class="drops-container" id="drops-container"></div>
+    </div>
+
+    <div class="main-app">
+        <header>
+            <div class="logo">⚡ UPGRADER<span>.PRO</span></div>
+            <div class="header-controls">
+                <div id="auth-header-block">
+                    <button class="btn-steam-login" onclick="openSteamAuth()">
+                        <img src="https://community.cloudflare.steamstatic.com/public/shared/images/signinthroughsteam/sits_01.png" style="height: 22px;">
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <div class="workspace-card">
+                <h3>Ваш вибір</h3>
+                <div class="selected-list" id="offer-list">
+                    <div class="empty-placeholder">Виберіть скіни з вашого інвентарю знизу</div>
+                </div>
+                <div class="total-value" id="offer-value">$0.00</div>
+            </div>
+
+            <div class="workspace-card" style="justify-content: space-between;">
+                <h3>Апгрейдер</h3>
+                <div class="wheel-container" id="wheel">
+                    <div class="needle" id="needle"></div>
+                    <div class="wheel-inner">
+                        <div class="percent" id="chance-percent">0.00%</div>
+                        <div class="label">шанс виграшу</div>
+                    </div>
+                </div>
+                <div class="preset-categories-panel">
+                    <button class="btn-preset" onclick="applyPresetChance(0.30)">30%</button>
+                    <button class="btn-preset" onclick="applyPresetChance(0.50)">50%</button>
+                    <button class="btn-preset" onclick="applyPresetChance(0.70)">70%</button>
+                    <button class="btn-preset" onclick="applyPresetMultiplier(2)">2x</button>
+                    <button class="btn-preset" onclick="applyPresetMultiplier(5)">5x</button>
+                    <button class="btn-preset" onclick="applyPresetMultiplier(10)">10x</button>
+                    <button class="btn-preset" onclick="applyPresetMultiplier(20)">20x</button>
+                </div>
+                <div id="status-banner">Завантаження скінів...</div>
+                <div class="upgrade-controls">
+                    <button class="btn-upgrade" id="btn-upgrade" disabled>Прокачати</button>
+                    <label class="fast-roll-option">
+                        <input type="checkbox" id="fast-roll-toggle"> Швидка гра
+                    </label>
+                </div>
+            </div>
+
+            <div class="workspace-card">
+                <h3>Цільовий скін</h3>
+                <div class="selected-list" id="target-display" style="width: 100%;">
+                    <div class="empty-placeholder">Оберіть скін з магазину праворуч</div>
+                </div>
+                <div class="total-value" id="target-value">$0.00</div>
+                <button class="btn-buy" id="btn-buy" onclick="buyTargetSkin()">Купити скін</button>
+            </div>
+        </div>
+
+        <div class="inventory-section">
+            <div class="inventory-card">
+                <div class="auth-lock-overlay" id="inv-lock">
+                    <div>🔒 Будь ласка, авторизуйтесь через Steam,<br>щоб керувати своїм інвентарем</div>
+                </div>
+                <h3>Мій інвентар <span id="my-inv-count">(0)</span></h3>
+                <div class="skins-grid" id="my-skins-grid"></div>
+            </div>
+
+            <div class="inventory-card">
+                <div class="auth-lock-overlay" id="market-lock">
+                    <div>🔒 Будь ласка, авторизуйтесь через Steam,<br>щоб купувати скіни на маркеті</div>
+                </div>
+                <h3>
+                    <span>Маркет (Покупка)</span>
+                    <input type="text" id="market-search" class="market-search-box" placeholder="Шукати скін..." oninput="handleSearch()">
+                </h3>
+                <div class="skins-grid" id="store-skins-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GOOGLE PAY -->
+<div class="gpay-modal" id="gpay-modal">
+    <div class="gpay-box">
+        <div class="gpay-header">
+            <img class="gpay-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="GPay">
+            <span class="gpay-close" onclick="closeDepositModal()">&times;</span>
+        </div>
+        <div class="gpay-field">
+            <label>Сума до сплати ($)</label>
+            <input type="number" id="gpay-amount" value="100" min="1" max="1500">
+        </div>
+        <div class="gpay-field">
+            <label>Спосіб оплати (Картка)</label>
+            <div class="gpay-card-select">
+                <span id="gpay-card-num">Visa •••• 4291</span>
+                <span onclick="resetGPayLimit()" style="color:#1a73e8; font-size:11px; margin-left:10px; cursor:pointer; text-decoration:underline;">(Скинути ліміт)</span>
+            </div>
+        </div>
+        <p style="font-size:10px; color:#5f6368; line-height:1.4;">Кошти будуть конвертовані безпосередньо в еквівалент скінами у вашому інвентарі.</p>
+        <button class="gpay-btn" onclick="submitGPayDeposit()">Оплатити через Google Pay</button>
+    </div>
+</div>
+
+<!-- STEAM AUTH -->
+<div class="modal" id="steam-auth-modal">
+    <div class="steam-modal-content">
+        <span class="modal-close" onclick="closeSteamAuth()" style="color:#8f9da6;">&times;</span>
+        <div class="steam-logo">
+            <svg viewBox="0 0 24 24" width="28" fill="#fff"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.42 3.593 9.99 8.547 11.464l.11-.11v-1.616c-.432-.084-.827-.272-1.15-.54-.645-.536-1.025-1.332-1.01-2.18.016-1.144.757-2.11 1.77-2.483.214-.543.606-.99 1.107-1.266v-2.31c-.347-.1-.665-.286-.922-.544-.645-.536-1.025-1.333-1.01-2.181.02-1.393 1.155-2.502 2.548-2.482 1.393.02 2.502 1.155 2.482 2.548-.01.765-.36 1.458-.923 1.91l.03-.02v2.308c.504.275.897.72 1.112 1.263 1.013.373 1.754 1.34 1.77 2.484.015.848-.365 1.644-1.01 2.18-.323.268-.718.456-1.15.54v1.616c.045.045.08.08.113.11 4.954-1.474 8.547-6.044 8.547-11.464 0-6.627-5.373-12-12-12zm-3.11 14.896c-.636 0-1.15-.515-1.15-1.15s.514-1.15 1.15-1.15c.635 0 1.15.515 1.15 1.15s-.515 1.15-1.15 1.15zm6.22 0c-.636 0-1.15-.515-1.15-1.15s.514-1.15 1.15-1.15c.635 0 1.15.515 1.15 1.15s-.515 1.15-1.15 1.15z"/></svg>
+            <span>ВХІД ЧЕРЕЗ STEAM</span>
+        </div>
+        <p style="font-size:11px; line-height:1.6; color:#8f9da6; margin-bottom:20px;">Авторизуйтесь на нашому сервісі за допомогою безпечного API Steam Secure Auth.</p>
+        <label style="font-size:12px; color:#8f9da6; display:block; margin-bottom:5px;">Ім'я облікового запису Steam</label>
+        <input type="text" id="steam-username" value="s1mple_CS2" style="width:100%; background:#101822; border:1px solid #2a475e; color:#c7d5e0; padding:10px; border-radius:3px; font-size:14px; margin-bottom:12px; outline:none; box-sizing:border-box;">
+        <label style="font-size:12px; color:#8f9da6; display:block; margin-bottom:5px;">Пароль</label>
+        <input type="password" id="steam-password" value="******" style="width:100%; background:#101822; border:1px solid #2a475e; color:#c7d5e0; padding:10px; border-radius:3px; font-size:14px; margin-bottom:12px; outline:none; box-sizing:border-box;">
+        <button class="steam-btn" onclick="executeSteamLogin()">Увійти в акаунт</button>
+    </div>
+</div>
+
+<!-- COMPENSATION MODAL -->
+<div class="modal" id="compensation-modal">
+    <div class="compensation-modal-content">
+        <h2 style="color:var(--accent); font-size:20px; margin: 0 0 10px 0;">🎁 КОМПЕНСАЦІЯ!</h2>
+        <p style="font-size:12px; color:var(--text-gray); margin-bottom:20px;">На жаль, апгрейд не вдався. Проте спрацювала система захисту гравця! Ви безкоштовно отримуєте цей скін:</p>
+        <div style="background-color:var(--panel-sub); border:1px solid var(--border); border-radius:8px; padding:15px; margin-bottom:20px; display:inline-block; width:80%;">
+            <img id="compensation-item-img" src="" style="width:85px; height:85px; object-fit:contain;">
+            <div id="compensation-item-name" style="font-size:11px; font-weight:bold; margin-top:8px;"></div>
+            <div id="compensation-item-price" style="font-size:12px; color:var(--accent); font-weight:bold; margin-top:4px;"></div>
+        </div>
+        <button class="btn-submit-deposit" onclick="closeCompensationModal()">Забрати скін</button>
+    </div>
+</div>
+
+<!-- STEAM NOTIFICATION -->
+<div class="steam-notification" id="steam-notif" onclick="openSteamTradeOffer()">
+    <div class="steam-notif-bell">✉</div>
+    <div>
+        <div class="steam-notif-title">Новий обмін надіслано!</div>
+        <div class="steam-notif-desc">Натисніть сюди, щоб підтвердити пропозицію.</div>
+    </div>
+</div>
+
+<!-- STEAM TRADE MODAL -->
+<div class="steam-trade-modal" id="steam-trade-modal">
+    <div class="steam-trade-box">
+        <div class="steam-trade-header">
+            <span>Пропозиція обміну - Steam Client</span>
+            <span style="cursor:pointer;" onclick="closeSteamTradeOffer()">&times;</span>
+        </div>
+        <div class="steam-warning-box">
+            <strong>⚠️ Увага! Односторонній обмін (Подарунок)</strong><br>
+            Користувач <strong>UPGRADER.PRO</strong> пропонує вам безкоштовний скін. Ви нічого не віддаєте натомість.
+        </div>
+        <div class="steam-trade-grids">
+            <div class="steam-trade-grid-card">
+                <img class="steam-partner-avatar" src="https://community.cloudflare.steamstatic.com/public/shared/images/responsive/share_steam_logo.png" alt="">
+                <span style="font-size:10px; color:#5c7e10; margin-bottom:10px; font-weight:bold; display:block; text-transform:uppercase;">Ви отримаєте:</span>
+                <img id="steam-trade-item-img" src="" style="width:75px; height:75px; object-fit:contain;">
+                <div id="steam-trade-item-name" style="font-size:10px; font-weight:bold; margin-top:6px; color:#fff;"></div>
+            </div>
+            <div class="steam-trade-grid-card" style="justify-content:center; color:#556775; background-color:#0d131a;">
+                <span style="font-size:10px; margin-bottom:8px; text-transform:uppercase; font-weight:bold; color:#556775;">Ваш інвентар:</span>
+                <span style="font-size:14px; color:#3d4b56; font-weight:bold;">Нічого не вибрано</span>
+            </div>
+        </div>
+        <label class="steam-checkbox-label">
+            <input type="checkbox" id="steam-trade-confirm" onchange="toggleSteamAcceptBtn()"> Так, я підтверджую, що це подарунок.
+        </label>
+        <button class="btn-steam-accept" id="btn-steam-accept" disabled onclick="confirmSteamTradeAccept()">Прийняти обмін</button>
+    </div>
+</div>
+
+<script>
+// ==================== АУДІО ====================
+let audioCtx = null;
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playTick() {
+    try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(1400, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+    } catch(e) {}
+}
+function playSuccess() {
+    try {
+        initAudio();
+        const now = audioCtx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(f, now + i * 0.07);
+            gain.gain.setValueAtTime(0, now + i * 0.07);
+            gain.gain.linearRampToValueAtTime(0.05, now + i * 0.07 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 0.25);
+            osc.start(now + i * 0.07); osc.stop(now + i * 0.07 + 0.3);
+        });
+    } catch(e) {}
+}
+function playFailure() {
+    try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(90, audioCtx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    } catch(e) {}
+}
+function playSteamChime() {
+    try {
+        initAudio();
+        const now = audioCtx.currentTime;
+        [[880, now], [1046.5, now + 0.07]].forEach(([f, t]) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(f, t);
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.04, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+            osc.start(t); osc.stop(t + 0.35);
+        });
+    } catch(e) {}
+}
+
+// ==================== СТАН ====================
+let myInventory = [];
+let marketSkins = [];
+let selectedOfferIds = [];
+let selectedTargetId = null;
+let isSpinning = false;
+let isLoggedIn = false;
+let activeWithdrawalSkin = null;
+let nextId = 1;
+
+const STORAGE_INV = 'upgrader_inventory';
+const STORAGE_ID  = 'upgrader_next_id';
+
+function saveInventory() {
+    localStorage.setItem(STORAGE_INV, JSON.stringify(myInventory));
+    localStorage.setItem(STORAGE_ID, nextId.toString());
+}
+
+function loadInventory() {
+    const raw = localStorage.getItem(STORAGE_INV);
+    const rawId = localStorage.getItem(STORAGE_ID);
+    if (raw) {
+        myInventory = JSON.parse(raw);
+        nextId = rawId ? parseInt(rawId) : (myInventory.length + 1);
+    } else {
+        // стартовий набір
+        myInventory = [
+            { id: nextId++, name: "AWP | Atheris", price: 8.50, rarity_color: "#8847ff", image: "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_awp_hy_atheris_light_png.png" },
+            { id: nextId++, name: "AK-47 | Slate", price: 4.20, rarity_color: "#8847ff", image: "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_ak47_cu_ak47_slate_light_png.png" },
+            { id: nextId++, name: "M4A4 | Evil Dai", price: 5.10, rarity_color: "#8847ff", image: "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_m4a1_cu_m4a4_ancestral_light_png.png" }
+        ];
+        saveInventory();
+    }
+}
+
+// ==================== ЦІНА ====================
+function calculateStablePrice(skinId, rarityId) {
+    let hash = 0;
+    for (let i = 0; i < skinId.length; i++) {
+        hash = ((hash << 5) - hash) + skinId.charCodeAt(i);
+        hash |= 0;
+    }
+    const h = Math.abs(hash);
+    if (rarityId.includes('covert') || rarityId.includes('ancient'))
+        return Math.round((180 + (h % 820)) * 100) / 100;
+    if (rarityId.includes('classified') || rarityId.includes('mythical'))
+        return Math.round((35 + (h % 115)) * 100) / 100;
+    if (rarityId.includes('restricted') || rarityId.includes('rare'))
+        return Math.round((6 + (h % 24)) * 100) / 100;
+    if (rarityId.includes('milspec') || rarityId.includes('uncommon'))
+        return Math.round((1.2 + (h % 4)) * 100) / 100;
+    return Math.round((250 + (h % 1750)) * 100) / 100;
+}
+
+// ==================== ЗАВАНТАЖЕННЯ СКІНІВ ====================
+async function loadMarketSkins() {
+    document.getElementById('status-banner').innerText = 'Завантаження бази скінів...';
+    const legendary = [
+        { id: 'legend-dlore',  name: 'AWP | Dragon Lore (Factory New)',      price: 11500, rarity_color: '#eb4b4b', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_awp_cu_awp_dragon_light_png.png' },
+        { id: 'legend-howl',   name: 'M4A4 | Howl (Factory New)',            price: 5400,  rarity_color: '#eb4b4b', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_m4a1_cu_m4_howl_light_png.png' },
+        { id: 'legend-gpgnir', name: 'AWP | Gungnir (Factory New)',          price: 12200, rarity_color: '#eb4b4b', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_awp_gs_awp_gungnir_light_png.png' },
+        { id: 'legend-lotus',  name: 'AK-47 | Wild Lotus (Factory New)',     price: 10800, rarity_color: '#eb4b4b', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_ak47_cu_ak47_wild_lotus_light_png.png' },
+        { id: 'legend-ruby',   name: '★ Butterfly Knife | Doppler Ruby (FN)', price: 9500,  rarity_color: '#eb4b4b', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_knife_butterfly_am_doppler_phase2_light_png.png' }
+    ];
+
+    try {
+        const res = await fetch('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json');
+        if (!res.ok) throw new Error('API fail');
+        const data = await res.json();
+        const popular = ['AK-47', 'AWP', 'M4A4', 'M4A1-S', 'Desert Eagle', 'USP-S', 'Glock-18', 'Knife', '★'];
+        const legendNames = legendary.map(l => l.name);
+        const temp = [...legendary];
+        for (const item of data) {
+            const isPopular = popular.some(pw => item.name.includes(pw));
+            const isDupe = legendNames.some(ln => item.name.includes(ln));
+            if (isPopular && item.image && !isDupe) {
+                const rarityId = (item.rarity && item.rarity.id) ? item.rarity.id : '';
+                const rarityColor = (item.rarity && item.rarity.color) ? item.rarity.color : '#4b69ff';
+                temp.push({ id: item.id, name: item.name, price: calculateStablePrice(item.id, rarityId), rarity_color: rarityColor, image: item.image });
+            }
+        }
+        temp.sort((a, b) => a.price - b.price);
+        marketSkins = temp;
+        document.getElementById('status-banner').innerText = `База завантажена: ${marketSkins.length} скінів`;
+    } catch(e) {
+        marketSkins = [
+            ...legendary,
+            { id: 'backup-3', name: 'AK-47 | Redline', price: 12.50, rarity_color: '#8847ff', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_ak47_aa_flames_light_png.png' },
+            { id: 'backup-4', name: 'Desert Eagle | Blaze', price: 280.00, rarity_color: '#eb4b4b', image: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/weapon_deagle_aa_flames_light_png.png' }
+        ];
+        document.getElementById('status-banner').innerText = 'Локальний резерв завантажено';
+    }
+
+    renderMarket(marketSkins);
+    updateWorkspace();
+}
+
+// ==================== РЕНДЕР ====================
+function renderInventory() {
+    const grid = document.getElementById('my-skins-grid');
+    grid.innerHTML = '';
+    document.getElementById('my-inv-count').innerText = `(${myInventory.length})`;
+    myInventory.forEach(skin => {
+        const isSelected = selectedOfferIds.includes(skin.id);
+        const item = document.createElement('div');
+        item.className = `skin-item ${isSelected ? 'selected' : ''}`;
+        item.innerHTML = `
+            <div class="skin-rarity" style="background-color: ${skin.rarity_color}"></div>
+            <div class="skin-img" onclick="selectSkinClick(${skin.id})"><img src="${skin.image}" alt=""></div>
+            <div class="skin-name" onclick="selectSkinClick(${skin.id})">${skin.name}</div>
+            <div class="skin-price" onclick="selectSkinClick(${skin.id})">$${skin.price.toFixed(2)}</div>
+            <button class="btn-skin-withdraw" onclick="initiateFakeWithdraw(event, ${skin.id})">Вивести</button>
+        `;
+        grid.appendChild(item);
+    });
+}
+
+function selectSkinClick(id) {
+    if (!isSpinning) toggleSelectOffer(id);
+}
+
+function renderMarket(skinsList) {
+    const grid = document.getElementById('store-skins-grid');
+    grid.innerHTML = '';
+    skinsList.forEach(skin => {
+        const isSelected = selectedTargetId === skin.id;
+        const item = document.createElement('div');
+        item.className = `skin-item ${isSelected ? 'selected' : ''}`;
+        item.onclick = () => { if (!isSpinning) selectTarget(skin.id); };
+        item.innerHTML = `
+            <div class="skin-rarity" style="background-color: ${skin.rarity_color}"></div>
+            <div class="skin-img"><img src="${skin.image}" alt=""></div>
+            <div class="skin-name">${skin.name}</div>
+            <div class="skin-price">$${skin.price.toFixed(2)}</div>
+        `;
+        grid.appendChild(item);
+    });
+}
+
+function handleSearch() {
+    const query = document.getElementById('market-search').value.toLowerCase();
+    renderMarket(marketSkins.filter(s => s.name.toLowerCase().includes(query)));
+}
+
+function toggleSelectOffer(id) {
+    initAudio();
+    const idx = selectedOfferIds.indexOf(id);
+    if (idx > -1) {
+        selectedOfferIds.splice(idx, 1);
+    } else {
+        if (selectedOfferIds.length >= 6) { alert("Максимально для апгрейду можна обрати 6 предметів!"); return; }
+        selectedOfferIds.push(id);
+    }
+    updateWorkspace();
+    renderInventory();
+}
+
+function selectTarget(id) {
+    initAudio();
+    selectedTargetId = (selectedTargetId === id) ? null : id;
+    updateWorkspace();
+    renderMarket(marketSkins);
+}
+
+function updateWorkspace() {
+    const offerList = document.getElementById('offer-list');
+    const offerSkins = myInventory.filter(s => selectedOfferIds.includes(s.id));
+    let totalOffer = 0;
+
+    if (offerSkins.length === 0) {
+        offerList.innerHTML = '<div class="empty-placeholder">Виберіть скіни з вашого інвентарю знизу</div>';
+    } else {
+        offerList.innerHTML = '';
+        offerSkins.forEach(skin => {
+            totalOffer += skin.price;
+            const div = document.createElement('div');
+            div.className = 'skin-item';
+            div.style.width = '85px'; div.style.height = '85px';
+            div.innerHTML = `
+                <div class="skin-rarity" style="background-color: ${skin.rarity_color}"></div>
+                <div class="skin-img" style="height:40px;"><img src="${skin.image}"></div>
+                <div class="skin-name" style="font-size:8px;">${skin.name}</div>
+                <div class="skin-price" style="font-size:9px;">$${skin.price.toFixed(2)}</div>
+            `;
+            div.onclick = () => { if (!isSpinning) toggleSelectOffer(skin.id); };
+            offerList.appendChild(div);
+        });
+    }
+    document.getElementById('offer-value').innerText = `$${totalOffer.toFixed(2)}`;
+
+    const targetDisplay = document.getElementById('target-display');
+    const btnBuy = document.getElementById('btn-buy');
+    const targetSkin = marketSkins.find(s => s.id === selectedTargetId);
+    let totalTarget = 0;
+
+    if (!targetSkin) {
+        targetDisplay.innerHTML = '<div class="empty-placeholder">Оберіть скін з магазину праворуч</div>';
+        btnBuy.style.display = 'none';
+    } else {
+        totalTarget = targetSkin.price;
+        targetDisplay.innerHTML = `
+            <div class="target-premium-card" style="border-color: ${targetSkin.rarity_color};">
+                <div class="skin-img-large" style="filter: drop-shadow(0 0 15px ${targetSkin.rarity_color}80);">
+                    <img src="${targetSkin.image}" alt="">
+                </div>
+                <div class="skin-title-large">${targetSkin.name}</div>
+                <div class="skin-price-large">$${targetSkin.price.toFixed(2)}</div>
+            </div>
+        `;
+        btnBuy.style.display = 'none';
+    }
+    document.getElementById('target-value').innerText = `$${totalTarget.toFixed(2)}`;
+
+    const chancePercentEl = document.getElementById('chance-percent');
+    const wheel = document.getElementById('wheel');
+    const btnUpgrade = document.getElementById('btn-upgrade');
+
+    if (totalOffer === 0 || totalTarget === 0) {
+        chancePercentEl.innerText = '0.00%';
+        wheel.style.background = 'conic-gradient(var(--border) 0deg, var(--border) 360deg)';
+        btnUpgrade.disabled = true;
+        return;
+    }
+
+    let chance = (totalOffer / totalTarget) * 100;
+    if (chance > 75) chance = 75.00;
+    chancePercentEl.innerText = `${chance.toFixed(2)}%`;
+    const chanceAngle = chance * 3.6;
+    wheel.style.background = `conic-gradient(var(--accent) 0deg, var(--accent) ${chanceAngle}deg, #1f202b ${chanceAngle}deg, #1f202b 360deg)`;
+    btnUpgrade.disabled = false;
+}
+
+// ==================== ПРЕСЕТИ ====================
+function applyPresetChance(chanceVal) {
+    initAudio();
+    const offerSkins = myInventory.filter(s => selectedOfferIds.includes(s.id));
+    if (offerSkins.length === 0) { alert("Виберіть скіни з вашого інвентарю спочатку!"); return; }
+    const totalOffer = offerSkins.reduce((a, b) => a + b.price, 0);
+    selectClosestMarketSkin(totalOffer / chanceVal);
+}
+
+function applyPresetMultiplier(multVal) {
+    initAudio();
+    const offerSkins = myInventory.filter(s => selectedOfferIds.includes(s.id));
+    if (offerSkins.length === 0) { alert("Виберіть скіни з вашого інвентарю спочатку!"); return; }
+    const totalOffer = offerSkins.reduce((a, b) => a + b.price, 0);
+    selectClosestMarketSkin(totalOffer * multVal);
+}
+
+function selectClosestMarketSkin(targetPrice) {
+    let closest = null, minDiff = Infinity;
+    marketSkins.forEach(skin => {
+        const diff = Math.abs(skin.price - targetPrice);
+        if (diff < minDiff) { minDiff = diff; closest = skin; }
+    });
+    if (closest) selectTarget(closest.id);
+}
+
+// ==================== АВТОРИЗАЦІЯ ====================
+function openSteamAuth() { initAudio(); document.getElementById('steam-auth-modal').style.display = 'flex'; }
+function closeSteamAuth() { document.getElementById('steam-auth-modal').style.display = 'none'; }
+
+function executeSteamLogin() {
+    const username = document.getElementById('steam-username').value || "s1mple_CS2";
+    isLoggedIn = true;
+    const authBlock = document.getElementById('auth-header-block');
+    authBlock.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+            <img class="user-avatar" src="https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg">
+            <div style="font-size:13px; font-weight:bold; color:#fff;">${username}</div>
+            <button class="btn-deposit" onclick="openDepositModal()">Поповнити GPay</button>
+        </div>
+    `;
+    document.getElementById('inv-lock').style.display = 'none';
+    document.getElementById('market-lock').style.display = 'none';
+    closeSteamAuth();
+    playSuccess();
+    updateWorkspace();
+}
+
+// ==================== GOOGLE PAY ====================
+function initGooglePay() {
+    if (!isLoggedIn) return;
+    const username = document.getElementById('steam-username').value || "s1mple_CS2";
+    if (!localStorage.getItem(`gpay_limit_${username}`)) {
+        localStorage.setItem(`gpay_limit_${username}`, (Math.floor(Math.random() * 701) + 300).toString());
+    }
+    if (!localStorage.getItem(`gpay_spent_${username}`)) {
+        localStorage.setItem(`gpay_spent_${username}`, '0');
+    }
+    if (!localStorage.getItem(`gpay_card_${username}`)) {
+        localStorage.setItem(`gpay_card_${username}`, `Visa •••• ${Math.floor(Math.random() * 9000) + 1000}`);
+    }
+    document.getElementById('gpay-card-num').innerText = localStorage.getItem(`gpay_card_${username}`);
+}
+
+function resetGPayLimit() {
+    if (!isLoggedIn) return;
+    const username = document.getElementById('steam-username').value || "s1mple_CS2";
+    localStorage.setItem(`gpay_spent_${username}`, '0');
+    alert(`Ліміт для акаунту ${username} успішно скинуто!`);
+    initGooglePay();
+}
+
+function openDepositModal() { initAudio(); initGooglePay(); document.getElementById('gpay-modal').style.display = 'flex'; }
+function closeDepositModal() { document.getElementById('gpay-modal').style.display = 'none'; }
+
+function submitGPayDeposit() {
+    const amountVal = parseFloat(document.getElementById('gpay-amount').value);
+    if (isNaN(amountVal) || amountVal <= 0) { alert("Введіть коректну суму!"); return; }
+
+    const username = document.getElementById('steam-username').value || "s1mple_CS2";
+    const limit = parseFloat(localStorage.getItem(`gpay_limit_${username}`) || '500');
+    const spent = parseFloat(localStorage.getItem(`gpay_spent_${username}`) || '0');
+
+    if (spent + amountVal > limit) {
+        playFailure();
+        alert(`Транзакцію відхилено банком!\nПеревищено щоденний ліміт картки для користувача ${username}.\nЛіміт: $${limit.toFixed(2)}, використано сьогодні: $${spent.toFixed(2)}.`);
+        return;
+    }
+    if (Math.random() * 100 > 60.0) {
+        playFailure();
+        alert("Помилка транзакції!\nВідмова банку-емітента (Transaction declined). Спробуйте ще раз.");
+        return;
+    }
+
+    // Логіка депозиту — додаємо скіни
+    let remaining = amountVal;
+    const added = [];
+    const shuffled = [...marketSkins].sort(() => Math.random() - 0.5);
+    for (const skin of shuffled) {
+        if (skin.price <= remaining) {
+            added.push(skin);
+            remaining -= skin.price;
+            if (remaining < 1.0) break;
+        }
+    }
+    if (added.length === 0 && marketSkins.length > 0) {
+        added.push(marketSkins.reduce((a, b) => a.price < b.price ? a : b));
+    }
+    for (const skin of added) {
+        myInventory.push({ id: nextId++, name: skin.name, price: skin.price, rarity_color: skin.rarity_color, image: skin.image });
+    }
+    saveInventory();
+    localStorage.setItem(`gpay_spent_${username}`, (spent + amountVal).toString());
+
+    closeDepositModal();
+    playSuccess();
+    alert(`Платіж успішний!\n$${amountVal.toFixed(2)} конвертовано у скіни!`);
+    renderInventory();
+    updateWorkspace();
+}
+
+// ==================== АПГРЕЙД ====================
+function runUpgrade() {
+    if (isSpinning) return;
+    if (selectedOfferIds.length === 0 || !selectedTargetId) return;
+
+    const targetSkin = marketSkins.find(s => s.id === selectedTargetId);
+    if (!targetSkin) return;
+
+    const offerSkins = myInventory.filter(s => selectedOfferIds.includes(s.id));
+    const totalOfferValue = offerSkins.reduce((a, b) => a + b.price, 0);
+    let chance = (totalOfferValue / targetSkin.price) * 100;
+    if (chance > 75) chance = 75;
+
+    const roll = Math.random() * 100;
+    const isWin = roll <= chance;
+
+    let stopAngle;
+    if (isWin) {
+        stopAngle = Math.random() * chance * 3.6;
+    } else {
+        stopAngle = (chance * 3.6) + Math.random() * (100 - chance) * 3.6;
+    }
+    const totalSpinAngle = 1440 + stopAngle;
+
+    isSpinning = true;
+    document.getElementById('btn-upgrade').disabled = true;
+    document.getElementById('status-banner').innerHTML = 'Крутимо стрілку...';
+
+    const fastRoll = document.getElementById('fast-roll-toggle').checked;
+    const needle = document.getElementById('needle');
+    needle.style.transition = 'none';
+    needle.style.transform = 'rotate(0deg)';
+    needle.offsetHeight;
+
+    const animDuration = fastRoll ? 200 : 3500;
+    needle.style.transition = `transform ${animDuration}ms cubic-bezier(0.15, 0.85, 0.2, 1)`;
+    needle.style.transform = `rotate(${totalSpinAngle}deg)`;
+
+    let elapsed = 0;
+    let tickDelay = fastRoll ? 15 : 25;
+    function triggerTick() {
+        if (elapsed < animDuration) {
+            playTick();
+            let progress = elapsed / animDuration;
+            tickDelay = (fastRoll ? 15 : 35) + (progress * (fastRoll ? 100 : 300));
+            elapsed += tickDelay;
+            setTimeout(triggerTick, tickDelay);
+        }
+    }
+    triggerTick();
+
+    setTimeout(() => {
+        const banner = document.getElementById('status-banner');
+
+        // Видаляємо запропоновані скіни
+        myInventory = myInventory.filter(s => !selectedOfferIds.includes(s.id));
+
+        let compensationSkin = null;
+        if (isWin) {
+            myInventory.push({ id: nextId++, name: targetSkin.name, price: targetSkin.price, rarity_color: targetSkin.rarity_color, image: targetSkin.image });
+            banner.innerHTML = `<span class="text-win">УСПІХ! Ви виграли ${targetSkin.name}!</span>`;
+            playSuccess();
+        } else {
+            playFailure();
+            if (Math.random() * 100 <= 30) {
+                const cheap = marketSkins.filter(s => s.price <= 15);
+                if (cheap.length > 0) {
+                    const comp = cheap[Math.floor(Math.random() * cheap.length)];
+                    compensationSkin = comp;
+                    myInventory.push({ id: nextId++, name: comp.name, price: comp.price, rarity_color: comp.rarity_color, image: comp.image });
+                }
+            }
+            if (compensationSkin) {
+                banner.innerHTML = '<span class="text-lose">НЕВДАЧА! Але... Спрацював захист! 🎁</span>';
+                setTimeout(() => showCompensationModal(compensationSkin), 1000);
+            } else {
+                banner.innerHTML = '<span class="text-lose">НЕВДАЧА! Скіни втрачено.</span>';
+            }
+        }
+
+        saveInventory();
+        selectedOfferIds = [];
+        selectedTargetId = null;
+        isSpinning = false;
+        renderInventory();
+        updateWorkspace();
+
+    }, animDuration + 100);
+}
+
+// ==================== КОМПЕНСАЦІЯ ====================
+function showCompensationModal(skin) {
+    document.getElementById('compensation-item-img').src = skin.image;
+    document.getElementById('compensation-item-name').innerText = skin.name;
+    document.getElementById('compensation-item-price').innerText = `$${skin.price.toFixed(2)}`;
+    document.getElementById('compensation-modal').style.display = 'flex';
+    playSuccess();
+}
+function closeCompensationModal() {
+    document.getElementById('compensation-modal').style.display = 'none';
+}
+
+// ==================== ВИВІД СКІНІВ ====================
+function initiateFakeWithdraw(event, id) {
+    event.stopPropagation();
+    if (!isLoggedIn) { alert("Будь ласка, спочатку авторизуйтесь через Steam!"); return; }
+    const skin = myInventory.find(s => s.id === id);
+    if (!skin) return;
+    activeWithdrawalSkin = skin;
+    document.getElementById('status-banner').innerHTML = `<span style="color:var(--accent)">Створення пропозиції обміну для ${skin.name}...</span>`;
+    setTimeout(showSteamNotification, 3000);
+}
+
+function showSteamNotification() {
+    playSteamChime();
+    document.getElementById('steam-notif').classList.add('show');
+}
+
+function openSteamTradeOffer() {
+    document.getElementById('steam-notif').classList.remove('show');
+    if (!activeWithdrawalSkin) return;
+    document.getElementById('steam-trade-item-img').src = activeWithdrawalSkin.image;
+    document.getElementById('steam-trade-item-name').innerText = activeWithdrawalSkin.name;
+    document.getElementById('steam-trade-confirm').checked = false;
+    document.getElementById('btn-steam-accept').disabled = true;
+    document.getElementById('steam-trade-modal').style.display = 'flex';
+}
+
+function closeSteamTradeOffer() {
+    document.getElementById('steam-trade-modal').style.display = 'none';
+}
+
+function toggleSteamAcceptBtn() {
+    document.getElementById('btn-steam-accept').disabled = !document.getElementById('steam-trade-confirm').checked;
+}
+
+function confirmSteamTradeAccept() {
+    if (!activeWithdrawalSkin) return;
+    document.getElementById('btn-steam-accept').innerText = 'Підтвердження в додатку Steam Guard...';
+    setTimeout(() => {
+        myInventory = myInventory.filter(s => s.id !== activeWithdrawalSkin.id);
+        saveInventory();
+        playSuccess();
+        alert("Пропозицію успішно підтверджено у вашому мобільному додатку Steam! Предмет додано у ваш Steam інвентар.");
+        closeSteamTradeOffer();
+        activeWithdrawalSkin = null;
+        renderInventory();
+        updateWorkspace();
+        document.getElementById('status-banner').innerHTML = 'Скін успішно виведено!';
+        document.getElementById('btn-steam-accept').innerText = 'Прийняти обмін';
+    }, 2000);
+}
+
+// ==================== ФЕЙК-ДРОП ====================
+const fakeUsers = ["ZywOo", "donk", "m0NESY", "shroud", "GabeN", "PashaBiceps", "s1mple", "rain", "NiKo", "b1t", "ropz", "jks", "Perfecto", "Loba", "buster"];
+
+function createFakeDrop() {
+    if (marketSkins.length === 0) return;
+    const container = document.getElementById('drops-container');
+    const user = fakeUsers[Math.floor(Math.random() * fakeUsers.length)];
+    const skin = marketSkins[Math.floor(Math.random() * marketSkins.length)];
+    const chance = (Math.random() * 68 + 7).toFixed(2);
+    const isWin = Math.random() > 0.45;
+    const card = document.createElement('div');
+    card.className = 'drop-card';
+    card.innerHTML = `
+        <div class="drop-rarity" style="background-color: ${skin.rarity_color}"></div>
+        <img class="drop-img" src="${skin.image}" alt="">
+        <div class="drop-info">
+            <span class="drop-user">${user}</span>
+            <span class="drop-name">${skin.name}</span>
+            <span class="drop-chance">${chance}% шанс</span>
+        </div>
+        <div class="drop-status" style="background-color: ${isWin ? '#2ebd59' : '#ff4b4b'}"></div>
+    `;
+    container.insertBefore(card, container.firstChild);
+    if (container.children.length > 7) container.removeChild(container.lastChild);
+}
+
+// ==================== ЗАПУСК ====================
+loadInventory();
+renderInventory();
+loadMarketSkins();
+setInterval(createFakeDrop, 1500);
+document.getElementById('btn-upgrade').addEventListener('click', runUpgrade);
+</script>
+</body>
+</html>
